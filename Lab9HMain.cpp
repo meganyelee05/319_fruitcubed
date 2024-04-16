@@ -261,38 +261,22 @@ int main(void){ // final main
   Clock_Delay(8000000);
   int y = 50;
   while(1){
-
       dataj = Sensor.Convert(Sensor.In());
       dataj /= 16;
       if(dataj>96) dataj=96;
       ST7735_FillRect(olddata, y-8, 32, 9, 0);
-      //if(j<1) j=0;
       // X goes from 0 to 127
       // j goes from 159 to 32
       // y=Ymax maps to j=32
       // y=Ymin maps to j=159
       IBlock* test = new IBlock(dataj, y);
-      //ST7735_DrawBitmap(dataj, 50, cucumber, 8, 8);
       olddata = dataj;
       oldy = y;
-       //ST7735_DrawBitmap(j+1, 50, strawberry, 8, 8);
-       //ST7735_DrawBitmap(j, 51, strawberry, 8, 8);
-       //ST7735_DrawBitmap(j+1, 51, strawberry, 8, 8);
       Clock_Delay(800000);
       y++;
       if(y>159){
           break;
       }
       Clock_Delay(8000000);
-  /*int NeedtoDraw;
-  while(1){
-      Time++;
-      if((Time%15)==0){
-        SquareBlk.x = Sensor.Convert(Sensor.In());
-      }*/
-    // wait for semaphore
-       // clear semaphore
-       // update ST7735R
-    // check for end game or level switch
     }
 }
