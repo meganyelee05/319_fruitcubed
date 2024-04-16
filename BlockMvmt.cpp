@@ -260,11 +260,12 @@ int main(void){ // final main
   SpriteInit();
   Clock_Delay(8000000);
   int y = 50;
-  while(1){
+    while(1){
       dataj = Sensor.Convert(Sensor.In());
       dataj /= 16;
       if(dataj>96) dataj=96;
       ST7735_FillRect(olddata, y-8, 32, 9, 0);
+      //if(j<1) j=0;
       // X goes from 0 to 127
       // j goes from 159 to 32
       // y=Ymax maps to j=32
@@ -272,11 +273,17 @@ int main(void){ // final main
       IBlock* test = new IBlock(dataj, y);
       olddata = dataj;
       oldy = y;
-      Clock_Delay(800000);
+      /*
+       * if(button = pressed){
+       * x = 800
+       * y = 800
+       */
+      Clock_Delay(800000); //x
       y++;
       if(y>159){
           break;
       }
-      Clock_Delay(8000000);
+      Clock_Delay(8000000); //y
     }
+}
 }
