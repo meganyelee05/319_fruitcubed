@@ -22,6 +22,7 @@
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
+uint32_t Time = 0;
 // ****note to ECE319K students****
 // the data sheet says the ADC does not work when clock is 80 MHz
 // however, the ADC seems to work on my boards at 80 MHz
@@ -42,8 +43,23 @@ uint32_t Random(uint32_t n){
 
 SlidePot Sensor(1500,0); // copy calibration from Lab 7
 
-uint32_t Data; //12-bit ADC
 
+struct sprite{
+    int32_t x;
+    int32_t y;
+    const uint16_t *image;
+    int16_t h,w;
+};
+typedef struct sprite sprite_t;
+
+sprite_t SquareBlk;
+void SpriteInit(void){
+        SquareBlk.x = 30;
+        SquareBlk.y = 50;
+        SquareBlk.image = strawberry;
+        SquareBlk.w = 16;
+        SquareBlk.h = 16;
+    }
 // games  engine runs at 30Hz
 void TIMG12_IRQHandler(void){uint32_t pos,msg;
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
@@ -56,10 +72,6 @@ void TIMG12_IRQHandler(void){uint32_t pos,msg;
     // 4) start sounds
     // 5) set semaphore
     // NO LCD OUTPUT IN INTERRUPT SERVICE ROUTINES
-    if((TIMG12->CPU_INT.IIDX) == 1){
-        Data = Sensor.In();
-        Sensor.Save(Data);
-    }
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
   }
 }
@@ -67,35 +79,25 @@ uint8_t TExaS_LaunchPadLogicPB27PB26(void){
   return (0x80|((GPIOB->DOUT31_0>>26)&0x03));
 }
 
-typedef enum {English, Spanish} Language_t;
+typedef enum {English, Spanish, Portuguese, French} Language_t;
 Language_t myLanguage=English;
-typedef enum {PLAY, INSTRUCT, LANGUAGE, SCORE, LINE1, LINE2, LINE3, LINE4} phrase_t;
-const char Play_English[] ="Play";
-const char Play_Spanish[] ="Juega";
-const char Score_Spanish[]="Puntuaci\xA2n";
-const char Score_English[]="Score";
+typedef enum {HELLO, GOODBYE, LANGUAGE} phrase_t;
+const char Hello_English[] ="Hello";
+const char Hello_Spanish[] ="\xADHola!";
+const char Hello_Portuguese[] = "Ol\xA0";
+const char Hello_French[] ="All\x83";
+const char Goodbye_English[]="Goodbye";
+const char Goodbye_Spanish[]="Adi\xA2s";
+const char Goodbye_Portuguese[] = "Tchau";
+const char Goodbye_French[] = "Au revoir";
 const char Language_English[]="English";
 const char Language_Spanish[]="Espa\xA4ol";
-const char Instruct_English[]="How to Play";
-const char Instruct_Spanish[]="C\xA2mo Jugar";
-const char Line1_English[]="Move blocks with";
-const char Line1_Spanish[]="Mover bloques con";
-const char Line2_English[]="slidepot, use SW3";
-const char Line2_Spanish[]="slidepot, usar SW3";
-const char Line3_English[]="to rotate and SW1";
-const char Line3_Spanish[]="para rotar y SW1";
-const char Line4_English[]="to drop blocks";
-const char Line4_Spanish[]="para soltar";
-
-const char *Phrases[8][2]={
-  {Play_English,Play_Spanish},
-  {Instruct_English,Instruct_Spanish},
-  {Language_English,Language_Spanish},
-  {Score_English,Score_Spanish},
-  {Line1_English, Line1_Spanish},
-  {Line2_English, Line2_Spanish},
-  {Line3_English, Line3_Spanish},
-  {Line4_English, Line4_Spanish}
+const char Language_Portuguese[]="Portugu\x88s";
+const char Language_French[]="Fran\x87" "ais";
+const char *Phrases[3][4]={
+  {Hello_English,Hello_Spanish,Hello_Portuguese,Hello_French},
+  {Goodbye_English,Goodbye_Spanish,Goodbye_Portuguese,Goodbye_French},
+  {Language_English,Language_Spanish,Language_Portuguese,Language_French}
 };
 // use main1 to observe special characters
 int main1(void){ // main1
@@ -106,7 +108,7 @@ int main1(void){ // main1
   ST7735_InitPrintf();
   ST7735_FillScreen(0x0000);            // set screen to black
   for(int myPhrase=0; myPhrase<= 2; myPhrase++){
-    for(int myL=0; myL<= 1; myL++){
+    for(int myL=0; myL<= 3; myL++){
          ST7735_OutString((char *)Phrases[LANGUAGE][myL]);
       ST7735_OutChar(' ');
          ST7735_OutString((char *)Phrases[myPhrase][myL]);
@@ -138,64 +140,39 @@ int main2(void){ // main2
   PLL_Init(); // set bus speed
   LaunchPad_Init();
   ST7735_InitPrintf();
-  Switch_Init();
-
-  uint32_t now = 0;
-  uint32_t last = 0;
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
-  while(1){
-      ST7735_FillScreen(ST7735_BLACK);
-      ST7735_DrawBitmap(0, 57, fruitcubedbannertest, 128,57); // player ship bottom
-      ST7735_SetCursor(5, 7);
-      ST7735_OutString((char *)Phrases[PLAY][myLanguage]);
-      ST7735_SetCursor(5, 9);
-      ST7735_OutString((char *)Phrases[INSTRUCT][myLanguage]);
-      ST7735_SetCursor(5, 11);
-      ST7735_OutString((char *)Phrases[LANGUAGE][myLanguage]);
-      while(1){
-          last = now;
-          Clock_Delay(800000);
-          now = Switch_In();
-          if(now != last){
-              if(now == 4){
-                  if(myLanguage == English){
-                      myLanguage = Spanish;
-                  }
-                  else{
-                      myLanguage = English;
-                  }
-                  break;
-              }
-          }
-      }
-  }
+  ST7735_FillScreen(ST7735_BLACK);
+  ST7735_DrawBitmap(76, 100, strawberry, 8, 8);
+  ST7735_DrawBitmap(84, 100, strawberry, 8, 8);
+  ST7735_DrawBitmap(92, 100, strawberry, 8, 8);
+  ST7735_DrawBitmap(100, 100, strawberry, 8, 8);
+  //ST7735_DrawBitmap(22, 159, PlayerShip0, 18,8); // player ship bottom
+  //ST7735_DrawBitmap(53, 151, Bunker0, 18,5);
+  //ST7735_DrawBitmap(42, 159, PlayerShip1, 18,8); // player ship bottom
+  //ST7735_DrawBitmap(62, 159, PlayerShip2, 18,8); // player ship bottom
+  //ST7735_DrawBitmap(82, 159, PlayerShip3, 18,8); // player ship bottom
+  //ST7735_DrawBitmap(0, 9, SmallEnemy10pointA, 16,10);
+  //ST7735_DrawBitmap(20,9, SmallEnemy10pointB, 16,10);
+  //ST7735_DrawBitmap(40, 9, SmallEnemy20pointA, 16,10);
+  //ST7735_DrawBitmap(60, 9, SmallEnemy20pointB, 16,10);
+  //ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
 
-//  ST7735_DrawBitmap(53, 151, Bunker0, 18,5);
-//  ST7735_DrawBitmap(42, 159, PlayerShip1, 18,8); // player ship bottom
-//  ST7735_DrawBitmap(62, 159, PlayerShip2, 18,8); // player ship bottom
-//  ST7735_DrawBitmap(82, 159, PlayerShip3, 18,8); // player ship bottom
-//  ST7735_DrawBitmap(0, 9, SmallEnemy10pointA, 16,10);
-//  ST7735_DrawBitmap(20,9, SmallEnemy10pointB, 16,10);
-//  ST7735_DrawBitmap(40, 9, SmallEnemy20pointA, 16,10);
-//  ST7735_DrawBitmap(60, 9, SmallEnemy20pointB, 16,10);
-//  ST7735_DrawBitmap(80, 9, SmallEnemy30pointA, 16,10);
-//
-//  for(uint32_t t=500;t>0;t=t-5){
-//    SmallFont_OutVertical(t,104,6); // top left
-//    Clock_Delay1ms(50);              // delay 50 msec
-//  }
-//  ST7735_FillScreen(0x0000);   // set screen to black
-//  ST7735_SetCursor(1, 1);
-//  ST7735_OutString((char *)"GAME OVER");
-//  ST7735_SetCursor(1, 2);
-//  ST7735_OutString((char *)"Nice try,");
-//  ST7735_SetCursor(1, 3);
-//  ST7735_OutString((char *)"Earthling!");
-//  ST7735_SetCursor(2, 4);
-//  ST7735_OutUDec(1234);
-  while(1){
+  /*for(uint32_t t=500;t>0;t=t-5){
+    SmallFont_OutVertical(t,104,6); // top left
+    Clock_Delay1ms(50);              // delay 50 msec
   }
+  ST7735_FillScreen(0x0000);   // set screen to black
+  ST7735_SetCursor(1, 1);
+  ST7735_OutString((char *)"GAME OVER");
+  ST7735_SetCursor(1, 2);
+  ST7735_OutString((char *)"Nice try,");
+  ST7735_SetCursor(1, 3);
+  ST7735_OutString((char *)"Earthling!");
+  ST7735_SetCursor(2, 4);
+  ST7735_OutUDec(1234);
+  while(1){
+  }*/
 }
 
 // use main3 to test switches and LEDs
@@ -203,37 +180,11 @@ int main3(void){ // main3
   __disable_irq();
   PLL_Init(); // set bus speed
   LaunchPad_Init();
-  ST7735_InitPrintf();
   Switch_Init(); // initialize switches
   LED_Init(); // initialize LED
-  ST7735_FillScreen(ST7735_BLACK);
-  uint32_t last = 0, now;
-  ST7735_SetCursor(0, 0);
   while(1){
     // write code to test switches and LEDs
-   now = Switch_In();
-   if(now != last){
-       if(now == 2){
-//           GPIOB->DOUTTGL31_0 = (1<<12);
-           LED_Toggle(12);
-           ST7735_OutString((char *)"Switch 2 pressed\n");
-       }
-       else if(now == 4){
-//           GPIOB->DOUTTGL31_0 = (1<<13);
-           LED_Toggle(13);
-           ST7735_OutString((char *)"Switch 3 pressed\n");
-       }
-       else if(now == 0){
-           ST7735_OutString((char *)"Nothing pressed\n");
-       }
-       else if(now == 1){
-//           GPIOB->DOUTTGL31_0 = (1<<16);
-           LED_Toggle(16);
-           ST7735_OutString((char *)"Switch 1 pressed\n");
-       }
-   }
-   last = now;
-   Clock_Delay(800000);
+   
   }
 }
 // use main4 to test sound outputs
@@ -246,17 +197,10 @@ int main4(void){ uint32_t last=0,now;
   Sound_Init();  // initialize sound
   TExaS_Init(ADC0,6,0); // ADC1 channel 6 is PB20, TExaS scope
   __enable_irq();
-
-  // testing
-
-
-
-
   while(1){
     now = Switch_In(); // one of your buttons
     if((last == 0)&&(now == 1)){
       Sound_Shoot(); // call one of your sounds
-      LED_Toggle(16);
     }
     if((last == 0)&&(now == 2)){
       Sound_Killed(); // call one of your sounds
@@ -265,54 +209,36 @@ int main4(void){ uint32_t last=0,now;
       Sound_Explosion(); // call one of your sounds
     }
     if((last == 0)&&(now == 8)){
-      //Sound_Fastinvader1(); // call one of your sounds
+      Sound_Fastinvader1(); // call one of your sounds
     }
     // modify this to test all your sounds
-    last = now;
   }
 }
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 
-uint32_t now = 0, last = 0;
-uint32_t olddata = 0;
-uint32_t dataj;
 
-
-void gameplay(void){
-    ST7735_FillScreen(ST7735_BLACK);
-    //ST7735_FillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
-    while(1){
-          dataj = Sensor.Convert(Sensor.In());
-          dataj /= 16;
-          if(dataj>127) dataj=127;
-          ST7735_FillRect(olddata, 50-7, 8, 8, 0);
-          ST7735_DrawBitmap(dataj, 50, strawberry, 8, 8);
-          olddata = dataj;
-          Clock_Delay(800000);
+struct IBlock{
+private:
+    int32_t x;
+    int32_t y;
+    const uint16_t *image = cucumber;
+    int16_t h, w;
+    bool settled;
+public:
+    IBlock(int x, int y){
+        ST7735_DrawBitmap(x, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+8, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+16, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+24, y, cucumber, 8, 8);
+        settled = false;
     }
-}
-
-void HowTo(void){
-    uint32_t inputs;
-    ST7735_FillScreen(ST7735_BLACK);
-    ST7735_SetCursor(0, 0);
-    ST7735_OutString((char *)Phrases[LINE1][myLanguage]);
-    ST7735_SetCursor(0, 1);
-    ST7735_OutString((char *)Phrases[LINE2][myLanguage]);
-    ST7735_SetCursor(0, 2);
-    ST7735_OutString((char *)Phrases[LINE3][myLanguage]);
-    ST7735_SetCursor(0, 3);
-    ST7735_OutString((char *)Phrases[LINE4][myLanguage]);
-    ST7735_SetCursor(0, 4);
-    ST7735_OutString((char *)"GLHF :P");
-    Clock_Delay(800000);
-    while(1){
-        now = Switch_In();
-        if(now == 1 || now == 2 || now == 4) break;
+    bool blocksettled(){
+        settled = true;
     }
-    return;
-}
-
+};
+int olddata = 0;
+int oldy = 0;
+int dataj;
 int main(void){ // final main
   __disable_irq();
   PLL_Init(); // set bus speed
@@ -321,54 +247,52 @@ int main(void){ // final main
     //note: if you colors are weird, see different options for
     // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
   ST7735_FillScreen(ST7735_BLACK);
+
   Sensor.Init(); // PB18 = ADC1 channel 5, slidepot
   Switch_Init(); // initialize switches
   LED_Init();    // initialize LED
-  //Sound_Init();  // initialize sound
+  Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
     // initialize interrupts on TimerG12 at 30 Hz
   //TimerG12_IntArm(80000000/30,2);
   // initialize all data structures
-
   __enable_irq();
-
+  SpriteInit();
+  Clock_Delay(8000000);
+  int y = 50;
   while(1){
-    // wait for semaphore
-      // clear semaphore
-      //Sensor.Sync();
 
+      dataj = Sensor.Convert(Sensor.In());
+      dataj /= 16;
+      if(dataj>96) dataj=96;
+      ST7735_FillRect(olddata, y-8, 32, 9, 0);
+      //if(j<1) j=0;
+      // X goes from 0 to 127
+      // j goes from 159 to 32
+      // y=Ymax maps to j=32
+      // y=Ymin maps to j=159
+      IBlock* test = new IBlock(dataj, y);
+      //ST7735_DrawBitmap(dataj, 50, cucumber, 8, 8);
+      olddata = dataj;
+      oldy = y;
+       //ST7735_DrawBitmap(j+1, 50, strawberry, 8, 8);
+       //ST7735_DrawBitmap(j, 51, strawberry, 8, 8);
+       //ST7735_DrawBitmap(j+1, 51, strawberry, 8, 8);
+      Clock_Delay(800000);
+      y++;
+      if(y>159){
+          break;
+      }
+      Clock_Delay(8000000);
+  /*int NeedtoDraw;
+  while(1){
+      Time++;
+      if((Time%15)==0){
+        SquareBlk.x = Sensor.Convert(Sensor.In());
+      }*/
+    // wait for semaphore
+       // clear semaphore
        // update ST7735R
-       ST7735_FillScreen(ST7735_BLACK);
-       ST7735_DrawBitmap(0, 57, fruitcubedbannertest, 128,57); // player ship bottom
-       ST7735_SetCursor(5, 7);
-       ST7735_OutString((char *)Phrases[PLAY][myLanguage]);
-       ST7735_SetCursor(5, 9);
-       ST7735_OutString((char *)Phrases[INSTRUCT][myLanguage]);
-       ST7735_SetCursor(5, 11);
-       ST7735_OutString((char *)Phrases[LANGUAGE][myLanguage]);
-       while(1){
-          last = now;
-          Clock_Delay(800000);
-          now = Switch_In();
-          if(now != last){
-              break;
-          }
-       }
-       if(now == 2){
-           if(myLanguage == English){
-               myLanguage = Spanish;
-           }
-           else{
-               myLanguage = English;
-           }
-       }
-       else if(now == 1){
-           ST7735_FillScreen(ST7735_BLACK);
-           gameplay();
-       }
-       else if(now == 4){
-           HowTo();
-       }
     // check for end game or level switch
-  }
+    }
 }
