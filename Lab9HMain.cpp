@@ -300,6 +300,18 @@ public:
             ST7735_DrawBitmap(x+16, y, cucumber, 8, 8);
             ST7735_DrawBitmap(x+24, y, cucumber, 8, 8);
         }
+        else if(randnum == 1){
+            ST7735_DrawBitmap(x, y, strawberry, 8, 8); //bot left corner
+            ST7735_DrawBitmap(x, y-8, strawberry, 8, 8); //top left
+            ST7735_DrawBitmap(x+8, y-8, strawberry, 8, 8); //top right
+            ST7735_DrawBitmap(x+8, y, strawberry, 8, 8); //bot right
+        }
+        else if(randnum == 2){
+            ST7735_DrawBitmap(x, y, banana, 8, 8);
+            ST7735_DrawBitmap(x+8, y, banana, 8, 8);
+            ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
+            ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
+        }
         //fill in rest
         settled = false;
     }
@@ -313,6 +325,21 @@ public:
             ST7735_DrawBitmap(dataj+8, y, cucumber, 8, 8);
             ST7735_DrawBitmap(dataj+16, y, cucumber, 8, 8);
             ST7735_DrawBitmap(dataj+24, y, cucumber, 8, 8);
+        }
+        else if(randnum == 1){
+            ST7735_FillRect(olddata, y-16, 16, 18, 0);
+            ST7735_DrawBitmap(dataj, y, strawberry, 8, 8); //bot left corner
+            ST7735_DrawBitmap(dataj, y-8, strawberry, 8, 8); //top left
+            ST7735_DrawBitmap(dataj+8, y-8, strawberry, 8, 8); //top right
+            ST7735_DrawBitmap(dataj+8, y, strawberry, 8, 8); //bot right
+        }
+        else if(randnum == 2){
+            ST7735_FillRect(olddata, y-8, 8, 9, 0);
+            ST7735_FillRect(olddata+8, y-24, 8, 25, 0);
+            ST7735_DrawBitmap(dataj, y, banana, 8, 8);
+            ST7735_DrawBitmap(dataj+8, y, banana, 8, 8);
+            ST7735_DrawBitmap(dataj+8, y-8, banana, 8, 8);
+            ST7735_DrawBitmap(dataj+8, y-16, banana, 8, 8);
         }
         //fill in rest
     }
@@ -350,58 +377,21 @@ void gameplay(void){
     while(1){
         spdelay = 800000;
         velocity = 8000000;
-        int y = 20;
-        randnum = 0;      //Random(3);
+        int y = 16;
+        randnum = Random(3);
         //if 0, cucumber
         //if 1, strawberry
-        dataj = Sensor.Convert(Sensor.In());
-        dataj /= 16;
-        if(randnum == 0){
-            limit = 96;
-        }
-        //keep fill out limits
-        if(dataj>limit) dataj=limit;
-
-        if(dataj>=0 && dataj<8) dataj = 0;
-        else if(dataj>=8 && dataj<16) dataj = 8;
-        else if(dataj>=16 && dataj<24) dataj = 16;
-        else if(dataj>=24 && dataj<32) dataj = 24;
-        else if(dataj>=32 && dataj<40) dataj = 32;
-        else if(dataj>=40 && dataj<48) dataj = 40;
-        else if(dataj>=48 && dataj<56) dataj = 48;
-        else if(dataj>=56 && dataj<64) dataj = 56;
-        else if(dataj>=64 && dataj<72) dataj = 64;
-        else if(dataj>=72 && dataj<80) dataj = 72;
-        else if(dataj>=80 && dataj<88) dataj = 80;
-        else if(dataj>=88 && dataj<96) dataj = 88;
-        else if(dataj>=96) dataj = 96;
-
-        //call creation based on x, y, randnum
-        //creation IBlock block(x, y, #)
+        if(randnum == 0) dataj = (Sensor.In() * 13 / 4095) * 8;
+        else if(randnum == 1) dataj = (Sensor.In() * 15 / 4095) * 8;
+        else if(randnum == 2) dataj = (Sensor.In() * 15 / 4095) * 8;
         IBlock block(dataj, y, randnum);
         olddata = dataj;
         while(1){
-            dataj = Sensor.Convert(Sensor.In());
-            dataj /= 16;
-            if(dataj>limit) dataj=limit;
-
-            if(dataj>=0 && dataj<8) dataj = 0;
-            else if(dataj>=8 && dataj<16) dataj = 8;
-            else if(dataj>=16 && dataj<24) dataj = 16;
-            else if(dataj>=24 && dataj<32) dataj = 24;
-            else if(dataj>=32 && dataj<40) dataj = 32;
-            else if(dataj>=40 && dataj<48) dataj = 40;
-            else if(dataj>=48 && dataj<56) dataj = 48;
-            else if(dataj>=56 && dataj<64) dataj = 56;
-            else if(dataj>=64 && dataj<72) dataj = 64;
-            else if(dataj>=72 && dataj<80) dataj = 72;
-            else if(dataj>=80 && dataj<88) dataj = 80;
-            else if(dataj>=88 && dataj<96) dataj = 88;
-            else if(dataj>=96) dataj = 96;
-
+            if(randnum == 0) dataj = (Sensor.In() * 13 / 4095) * 8;
+            else if(randnum == 1) dataj = (Sensor.In() * 15 / 4095) * 8;
+            else if(randnum == 2) dataj = (Sensor.In() * 15 / 4095) * 8;
             //call movement based on olddata, y, dataj, randnum
             block.moveblock(olddata, dataj, y, randnum);
-
 
             olddata = dataj;
             //if button pressed change x and y
@@ -415,7 +405,7 @@ void gameplay(void){
             }
             Clock_Delay(spdelay);
             y++;
-            if(y > 159){
+            if(y > 159){                //block hits bottom or contact with another block
               block.blocksettled();
               Clock_Delay(80000000);
               break;
@@ -423,6 +413,7 @@ void gameplay(void){
             Clock_Delay(velocity);
         }
     }
+    //IF LESS THAN 16
     gameover();
 }
 
