@@ -69,11 +69,11 @@ uint8_t TExaS_LaunchPadLogicPB27PB26(void){
 
 typedef enum {English, Spanish} Language_t;
 Language_t myLanguage=English;
-typedef enum {PLAY, INSTRUCT, LANGUAGE, SCORE, LINE1, LINE2, LINE3, LINE4} phrase_t;
+typedef enum {PLAY, INSTRUCT, LANGUAGE, SCORE, LINE1, LINE2, LINE3, LINE4, GG, HS} phrase_t;
 const char Play_English[] ="Play";
 const char Play_Spanish[] ="Juega";
-const char Score_Spanish[]="Puntuaci\xA2n";
-const char Score_English[]="Score";
+const char Score_Spanish[]="Puntuaci\xA2n: ";
+const char Score_English[]="Score: ";
 const char Language_English[]="English";
 const char Language_Spanish[]="Espa\xA4ol";
 const char Instruct_English[]="How to Play";
@@ -86,8 +86,12 @@ const char Line3_English[]="to rotate and SW1";
 const char Line3_Spanish[]="para rotar y SW1";
 const char Line4_English[]="to drop blocks";
 const char Line4_Spanish[]="para soltar";
+const char GG_English[]="Game Over";
+const char GG_Spanish[]="Fin";
+const char HS_English[]="High Score: ";
+const char HS_Spanish[]="Puntuaci\xA2n alta: ";
 
-const char *Phrases[8][2]={
+const char *Phrases[10][2]={
   {Play_English,Play_Spanish},
   {Instruct_English,Instruct_Spanish},
   {Language_English,Language_Spanish},
@@ -95,7 +99,9 @@ const char *Phrases[8][2]={
   {Line1_English, Line1_Spanish},
   {Line2_English, Line2_Spanish},
   {Line3_English, Line3_Spanish},
-  {Line4_English, Line4_Spanish}
+  {Line4_English, Line4_Spanish},
+  {GG_English, GG_Spanish},
+  {HS_English, HS_Spanish}
 };
 // use main1 to observe special characters
 int main1(void){ // main1
@@ -274,22 +280,86 @@ int main4(void){ uint32_t last=0,now;
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 
 uint32_t now = 0, last = 0;
-uint32_t olddata = 0;
+uint32_t olddata = 0, oldy = 0;
 uint32_t dataj;
+static uint32_t score = 0;
+static uint32_t highscore = 0;
 
+struct IBlock{
+private:
+    int32_t x;
+    int32_t y;
+    const uint16_t *image = cucumber;
+    int16_t h, w;
+    bool settled;
+public:
+    IBlock(int x, int y){
+        ST7735_DrawBitmap(x, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+8, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+16, y, cucumber, 8, 8);
+        ST7735_DrawBitmap(x+24, y, cucumber, 8, 8);
+        settled = false;
+    }
+    void blocksettled(){
+        settled = true;
+    }
+};
+
+void gameover(void){
+    ST7735_FillScreen(ST7735_BLACK);
+    ST7735_SetCursor(2, 7);
+    ST7735_OutString((char *)Phrases[GG][myLanguage]);
+    ST7735_SetCursor(2, 8);
+    ST7735_OutString((char *)Phrases[SCORE][myLanguage]);
+    printf("%d", score);
+    if(score>highscore){
+        highscore = score;
+    }
+    ST7735_SetCursor(2, 9);
+    ST7735_OutString((char *)Phrases[HS][myLanguage]);
+    printf("%d", highscore);
+    while(1){
+            last = now;
+            Clock_Delay(800000);
+            now = Switch_In();
+            if(now != last){
+                if(now == 1 || now == 2 || now == 4) break;
+            }
+        }
+}
 
 void gameplay(void){
+    score = 0;
+    int spdelay = 800000; int velocity = 8000000;
     ST7735_FillScreen(ST7735_BLACK);
-    //ST7735_FillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+    int y = 50;
     while(1){
           dataj = Sensor.Convert(Sensor.In());
           dataj /= 16;
-          if(dataj>127) dataj=127;
-          ST7735_FillRect(olddata, 50-7, 8, 8, 0);
-          ST7735_DrawBitmap(dataj, 50, strawberry, 8, 8);
+          if(dataj>96) dataj=96;
+          ST7735_FillRect(olddata, y-8, 32, 9, 0);
+          IBlock block(dataj, y);
           olddata = dataj;
-          Clock_Delay(800000);
+          oldy = y;
+          //if button pressed change x and y
+          last = now;
+          now = Switch_In();
+          if(now != last){
+              if(now == 1){
+                  spdelay = 800;
+                  velocity = 800;
+              }
+          }
+          Clock_Delay(spdelay);
+          y++;
+          if(y > 159){
+              block.blocksettled();
+              Clock_Delay(80000000);
+              break;
+          }
+          Clock_Delay(velocity);
     }
+    gameover();
 }
 
 void HowTo(void){
@@ -305,10 +375,13 @@ void HowTo(void){
     ST7735_OutString((char *)Phrases[LINE4][myLanguage]);
     ST7735_SetCursor(0, 4);
     ST7735_OutString((char *)"GLHF :P");
-    Clock_Delay(800000);
     while(1){
+        last = now;
+        Clock_Delay(800000);
         now = Switch_In();
-        if(now == 1 || now == 2 || now == 4) break;
+        if(now != last){
+            if(now == 1 || now == 2 || now == 4) break;
+        }
     }
     return;
 }
@@ -329,7 +402,6 @@ int main(void){ // final main
     // initialize interrupts on TimerG12 at 30 Hz
   //TimerG12_IntArm(80000000/30,2);
   // initialize all data structures
-
   __enable_irq();
 
   while(1){
@@ -339,7 +411,7 @@ int main(void){ // final main
 
        // update ST7735R
        ST7735_FillScreen(ST7735_BLACK);
-       ST7735_DrawBitmap(0, 57, fruitcubedbannertest, 128,57); // player ship bottom
+       ST7735_DrawBitmap(0, 57, fruitcubedbannertest, 128,57); // title banner
        ST7735_SetCursor(5, 7);
        ST7735_OutString((char *)Phrases[PLAY][myLanguage]);
        ST7735_SetCursor(5, 9);
