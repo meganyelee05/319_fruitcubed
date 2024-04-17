@@ -279,9 +279,9 @@ int main4(void){ uint32_t last=0,now;
 }
 // ALL ST7735 OUTPUT MUST OCCUR IN MAIN
 
-uint32_t now = 0, last = 0;
-uint32_t olddata = 0, oldy = 0;
-uint32_t dataj;
+uint32_t now = 0, last = 0, limit = 0;
+uint32_t olddata = 0;
+uint32_t dataj, randnum;
 static uint32_t score = 0;
 static uint32_t highscore = 0;
 
@@ -289,23 +289,37 @@ struct IBlock{
 private:
     int32_t x;
     int32_t y;
-    const uint16_t *image = cucumber;
+    const uint16_t *image;
     int16_t h, w;
     bool settled;
 public:
-    IBlock(int x, int y){
-        ST7735_DrawBitmap(x, y, cucumber, 8, 8);
-        ST7735_DrawBitmap(x+8, y, cucumber, 8, 8);
-        ST7735_DrawBitmap(x+16, y, cucumber, 8, 8);
-        ST7735_DrawBitmap(x+24, y, cucumber, 8, 8);
+    IBlock(int x, int y, int randnum){
+        if(randnum == 0){                                       //cucumber
+            ST7735_DrawBitmap(x, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(x+8, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(x+16, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(x+24, y, cucumber, 8, 8);
+        }
+        //fill in rest
         settled = false;
     }
     void blocksettled(){
         settled = true;
     }
+    void moveblock(int olddata, int dataj, int y, int randnum){
+        if(randnum == 0){                                       //cucumber
+            ST7735_FillRect(olddata, y-8, 32, 9, 0);
+            ST7735_DrawBitmap(dataj, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(dataj+8, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(dataj+16, y, cucumber, 8, 8);
+            ST7735_DrawBitmap(dataj+24, y, cucumber, 8, 8);
+        }
+        //fill in rest
+    }
 };
 
 void gameover(void){
+    Sound_Shoot(); //game over sound
     ST7735_FillScreen(ST7735_BLACK);
     ST7735_SetCursor(2, 7);
     ST7735_OutString((char *)Phrases[GG][myLanguage]);
@@ -332,32 +346,82 @@ void gameplay(void){
     score = 0;
     int spdelay = 800000; int velocity = 8000000;
     ST7735_FillScreen(ST7735_BLACK);
-    int y = 50;
+    //nested while loop- outer loop generates sprites randomly, inner loop moves sprite
     while(1){
-          dataj = Sensor.Convert(Sensor.In());
-          dataj /= 16;
-          if(dataj>96) dataj=96;
-          ST7735_FillRect(olddata, y-8, 32, 9, 0);
-          IBlock block(dataj, y);
-          olddata = dataj;
-          oldy = y;
-          //if button pressed change x and y
-          last = now;
-          now = Switch_In();
-          if(now != last){
-              if(now == 1){
-                  spdelay = 800;
-                  velocity = 800;
-              }
-          }
-          Clock_Delay(spdelay);
-          y++;
-          if(y > 159){
+        spdelay = 800000;
+        velocity = 8000000;
+        int y = 20;
+        randnum = 0;      //Random(3);
+        //if 0, cucumber
+        //if 1, strawberry
+        dataj = Sensor.Convert(Sensor.In());
+        dataj /= 16;
+        if(randnum == 0){
+            limit = 96;
+        }
+        //keep fill out limits
+        if(dataj>limit) dataj=limit;
+
+        if(dataj>=0 && dataj<8) dataj = 0;
+        else if(dataj>=8 && dataj<16) dataj = 8;
+        else if(dataj>=16 && dataj<24) dataj = 16;
+        else if(dataj>=24 && dataj<32) dataj = 24;
+        else if(dataj>=32 && dataj<40) dataj = 32;
+        else if(dataj>=40 && dataj<48) dataj = 40;
+        else if(dataj>=48 && dataj<56) dataj = 48;
+        else if(dataj>=56 && dataj<64) dataj = 56;
+        else if(dataj>=64 && dataj<72) dataj = 64;
+        else if(dataj>=72 && dataj<80) dataj = 72;
+        else if(dataj>=80 && dataj<88) dataj = 80;
+        else if(dataj>=88 && dataj<96) dataj = 88;
+        else if(dataj>=96) dataj = 96;
+
+        //call creation based on x, y, randnum
+        //creation IBlock block(x, y, #)
+        IBlock block(dataj, y, randnum);
+        olddata = dataj;
+        while(1){
+            dataj = Sensor.Convert(Sensor.In());
+            dataj /= 16;
+            if(dataj>limit) dataj=limit;
+
+            if(dataj>=0 && dataj<8) dataj = 0;
+            else if(dataj>=8 && dataj<16) dataj = 8;
+            else if(dataj>=16 && dataj<24) dataj = 16;
+            else if(dataj>=24 && dataj<32) dataj = 24;
+            else if(dataj>=32 && dataj<40) dataj = 32;
+            else if(dataj>=40 && dataj<48) dataj = 40;
+            else if(dataj>=48 && dataj<56) dataj = 48;
+            else if(dataj>=56 && dataj<64) dataj = 56;
+            else if(dataj>=64 && dataj<72) dataj = 64;
+            else if(dataj>=72 && dataj<80) dataj = 72;
+            else if(dataj>=80 && dataj<88) dataj = 80;
+            else if(dataj>=88 && dataj<96) dataj = 88;
+            else if(dataj>=96) dataj = 96;
+
+            //call movement based on olddata, y, dataj, randnum
+            block.moveblock(olddata, dataj, y, randnum);
+
+
+            olddata = dataj;
+            //if button pressed change x and y
+            last = now;
+            now = Switch_In();
+            if(now != last){
+                if(now == 1){
+                    spdelay = 800;
+                    velocity = 800;
+                }
+            }
+            Clock_Delay(spdelay);
+            y++;
+            if(y > 159){
               block.blocksettled();
               Clock_Delay(80000000);
               break;
-          }
-          Clock_Delay(velocity);
+            }
+            Clock_Delay(velocity);
+        }
     }
     gameover();
 }
@@ -397,10 +461,10 @@ int main(void){ // final main
   Sensor.Init(); // PB18 = ADC1 channel 5, slidepot
   Switch_Init(); // initialize switches
   LED_Init();    // initialize LED
-  //Sound_Init();  // initialize sound
+  Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
     // initialize interrupts on TimerG12 at 30 Hz
-  //TimerG12_IntArm(80000000/30,2);
+  TimerG12_IntArm(80000000/30,2);
   // initialize all data structures
   __enable_irq();
 
@@ -420,7 +484,7 @@ int main(void){ // final main
        ST7735_OutString((char *)Phrases[LANGUAGE][myLanguage]);
        while(1){
           last = now;
-          Clock_Delay(800000);
+          Clock_Delay1ms(10);
           now = Switch_In();
           if(now != last){
               break;
