@@ -103,7 +103,8 @@ const char *Phrases[10][2]={
   {HS_English, HS_Spanish}
 };
 
-int16_t bitmap[144] = {
+int16_t bitmap[160] = {
+                   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -212,12 +213,27 @@ public:
             this->y = y;
         }
     }
+
+    int collision(){
+        for(int i = this->y; i > (this->y - this->h); i--){
+            if(this->x < 15 && this->x > 0 && (bitmap[i] & (0x8000 >> (this->x + this->w))) && (bitmap[i] & (0x8000 >> (this->x - 1)))){
+                return 3;
+            }
+            if(this->x < 15 && (bitmap[i] & (0x8000 >> (this->x + this->w))) == 1){
+                return 2; //2 means right collision
+            }
+            if(this->x > 0 && (bitmap[i] & (0x8000 >> (this->x - 1)))){
+                return 1; //1 means left collision
+            }
+        }
+        return 0;
+    }
 };
 
 //return 0 if has space, 1 if no space (gotta stop)
 bool checker(IBlock block){
     for(int i = 0; i < block.w; i++){
-        if(((bitmap[block.y + 1 - 16]) & (0x8000 >> (block.x + i))) != 0)
+        if(((bitmap[block.y + 1]) & (0x8000 >> (block.x + i))) != 0)
             return 1;
     }
     return 0;
@@ -226,7 +242,7 @@ bool checker(IBlock block){
 void setmap(IBlock block){
     for(int j = 0; j < block.h; j++){
         for(int i = 0; i < block.w; i++){
-            bitmap[block.y - j - 16] |= (0x8000 >> (block.x + i));
+            bitmap[block.y - j] |= (0x8000 >> (block.x + i));
         }
     }
 }
@@ -235,18 +251,18 @@ void gameover(void){
     exittomain = 0;
     Sound_Shoot(); //game over sound
     ST7735_FillScreen(ST7735_BLACK);
-    ST7735_SetCursor(2, 7);
+    ST7735_SetCursor(0, 7);
     ST7735_OutString((char *)Phrases[GG][myLanguage]);
-    ST7735_SetCursor(2, 8);
+    ST7735_SetCursor(0, 8);
     ST7735_OutString((char *)Phrases[SCORE][myLanguage]);
     printf("%d", score);
     if(score>highscore){
         highscore = score;
     }
-    ST7735_SetCursor(2, 9);
+    ST7735_SetCursor(0, 9);
     ST7735_OutString((char *)Phrases[HS][myLanguage]);
     printf("%d", highscore);
-    for(int i = 0; i < 144; i++){
+    for(int i = 0; i < 160; i++){
         bitmap[i] = 0;
     }
     while(1){
@@ -308,7 +324,7 @@ void gameplay(void){
             //check if space below is clear
             if(block.y > 159 || checker(block)){                //block hits bottom or contact with another block
               block.blocksettled();
-              score += (block.w * block.h);
+              score += (block.w * block.h / 4);
               //update bitmap
               setmap(block);
               Clock_Delay(80000000);
@@ -397,184 +413,5 @@ int main(void){ // final main
        else if(now == 4){
            HowTo();
        }
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// use main1 to observe special characters
-int main1(void){ // main1
-    char l;
-  __disable_irq();
-  PLL_Init(); // set bus speed
-  LaunchPad_Init();
-  ST7735_InitPrintf();
-  ST7735_FillScreen(0x0000);            // set screen to black
-  for(int myPhrase=0; myPhrase<= 2; myPhrase++){
-    for(int myL=0; myL<= 1; myL++){
-         ST7735_OutString((char *)Phrases[LANGUAGE][myL]);
-      ST7735_OutChar(' ');
-         ST7735_OutString((char *)Phrases[myPhrase][myL]);
-      ST7735_OutChar(13);
-    }
-  }
-  Clock_Delay1ms(3000);
-  ST7735_FillScreen(0x0000);       // set screen to black
-  l = 128;
-  while(1){
-    Clock_Delay1ms(2000);
-    for(int j=0; j < 3; j++){
-      for(int i=0;i<16;i++){
-        ST7735_SetCursor(7*j+0,i);
-        ST7735_OutUDec(l);
-        ST7735_OutChar(' ');
-        ST7735_OutChar(' ');
-        ST7735_SetCursor(7*j+4,i);
-        ST7735_OutChar(l);
-        l++;
-      }
-    }
-  }
-}
-
-// use main2 to observe graphics
-int main2(void){ // main2
-  __disable_irq();
-  PLL_Init(); // set bus speed
-  LaunchPad_Init();
-  ST7735_InitPrintf();
-  Switch_Init();
-
-  uint32_t now = 0;
-  uint32_t last = 0;
-    //note: if you colors are weird, see different options for
-    // ST7735_InitR(INITR_REDTAB); inside ST7735_InitPrintf()
-  while(1){
-      ST7735_FillScreen(ST7735_BLACK);
-      ST7735_DrawBitmap(0, 57, fruitcubedbannertest, 128,57); // player ship bottom
-      ST7735_SetCursor(5, 7);
-      ST7735_OutString((char *)Phrases[PLAY][myLanguage]);
-      ST7735_SetCursor(5, 9);
-      ST7735_OutString((char *)Phrases[INSTRUCT][myLanguage]);
-      ST7735_SetCursor(5, 11);
-      ST7735_OutString((char *)Phrases[LANGUAGE][myLanguage]);
-      while(1){
-          last = now;
-          Clock_Delay(800000);
-          now = Switch_In();
-          if(now != last){
-              if(now == 4){
-                  if(myLanguage == English){
-                      myLanguage = Spanish;
-                  }
-                  else{
-                      myLanguage = English;
-                  }
-                  break;
-              }
-          }
-      }
-  }
-
-//  for(uint32_t t=500;t>0;t=t-5){
-//    SmallFont_OutVertical(t,104,6); // top left
-//    Clock_Delay1ms(50);              // delay 50 msec
-//  }
-//  ST7735_FillScreen(0x0000);   // set screen to black
-//  ST7735_SetCursor(1, 1);
-//  ST7735_OutString((char *)"GAME OVER");
-//  ST7735_SetCursor(1, 2);
-//  ST7735_OutString((char *)"Nice try,");
-//  ST7735_SetCursor(1, 3);
-//  ST7735_OutString((char *)"Earthling!");
-//  ST7735_SetCursor(2, 4);
-//  ST7735_OutUDec(1234);
-  while(1){
-  }
-}
-
-// use main3 to test switches and LEDs
-int main3(void){ // main3
-  __disable_irq();
-  PLL_Init(); // set bus speed
-  LaunchPad_Init();
-  ST7735_InitPrintf();
-  Switch_Init(); // initialize switches
-  LED_Init(); // initialize LED
-  ST7735_FillScreen(ST7735_BLACK);
-  uint32_t last = 0, now;
-  ST7735_SetCursor(0, 0);
-  while(1){
-    // write code to test switches and LEDs
-   now = Switch_In();
-   if(now != last){
-       if(now == 2){
-//           GPIOB->DOUTTGL31_0 = (1<<12);
-           LED_Toggle(12);
-           ST7735_OutString((char *)"Switch 2 pressed\n");
-       }
-       else if(now == 4){
-//           GPIOB->DOUTTGL31_0 = (1<<13);
-           LED_Toggle(13);
-           ST7735_OutString((char *)"Switch 3 pressed\n");
-       }
-       else if(now == 0){
-           ST7735_OutString((char *)"Nothing pressed\n");
-       }
-       else if(now == 1){
-//           GPIOB->DOUTTGL31_0 = (1<<16);
-           LED_Toggle(16);
-           ST7735_OutString((char *)"Switch 1 pressed\n");
-       }
-   }
-   last = now;
-   Clock_Delay(800000);
-  }
-}
-// use main4 to test sound outputs
-int main4(void){ uint32_t last=0,now;
-  __disable_irq();
-  PLL_Init(); // set bus speed
-  LaunchPad_Init();
-  Switch_Init(); // initialize switches
-  LED_Init(); // initialize LED
-  Sound_Init();  // initialize sound
-  TExaS_Init(ADC0,6,0); // ADC1 channel 6 is PB20, TExaS scope
-  __enable_irq();
-
-  while(1){
-    now = Switch_In(); // one of your buttons
-    if((last == 0)&&(now == 1)){
-      Sound_Shoot(); // call one of your sounds
-      LED_Toggle(16);
-    }
-    if((last == 0)&&(now == 2)){
-      Sound_Killed(); // call one of your sounds
-    }
-    if((last == 0)&&(now == 4)){
-      Sound_Explosion(); // call one of your sounds
-    }
-    if((last == 0)&&(now == 8)){
-      //Sound_Fastinvader1(); // call one of your sounds
-    }
-    // modify this to test all your sounds
-    last = now;
   }
 }
