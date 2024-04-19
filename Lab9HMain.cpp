@@ -176,11 +176,33 @@ public:
         settled = true;
     }
     void moveblock(int olddata, int dataj, int y, int randnum){
+        if(((dataj/8)<this->x) && collision()==1){
+                        dataj = olddata;
+                    }
+                    else if(((dataj/8)>this->x) && collision()==2){
+                        dataj = olddata;
+                    }
+                    else if(((dataj/8) != this->x) && collision()==3){
+                        dataj = olddata;
+                    }
+                    else if((dataj/8)<this->x){
+                        this->x = olddata / 8;              //c
+                        while(collision()!=1 && (this->x != dataj/8) && collision()!=3){
+                            this->x--;                      //c
+                        }
+                        dataj = this->x * 8;                //c
+                    }
+                    else if((dataj/8)>this->x){
+                        this->x = olddata / 8;              //c
+                        while(collision()!=2 && (this->x != dataj/8) && collision()!=3){
+                            this->x++;                      //c
+                        }
+                        dataj = this->x * 8;                //c
+                    }
         if(randnum == 0){                                       //cucumber
             ST7735_FillRect(olddata, y-16, 8, 17, 0);
             ST7735_DrawBitmap(dataj, y, cucumber, 8, 8);
             ST7735_DrawBitmap(dataj, y-8, cucumber, 8, 8);
-
             this->x = dataj / 8;
             this->y = y;
         }
@@ -217,9 +239,9 @@ public:
     int collision(){
         for(int i = this->y; i > (this->y - this->h); i--){
             if(this->x < 15 && this->x > 0 && (bitmap[i] & (0x8000 >> (this->x + this->w))) && (bitmap[i] & (0x8000 >> (this->x - 1)))){
-                return 3;
+                return 3; //collision on both sides
             }
-            if(this->x < 15 && (bitmap[i] & (0x8000 >> (this->x + this->w))) == 1){
+            if(this->x < 15 && (bitmap[i] & (0x8000 >> (this->x + this->w)))){
                 return 2; //2 means right collision
             }
             if(this->x > 0 && (bitmap[i] & (0x8000 >> (this->x - 1)))){
@@ -307,6 +329,7 @@ void gameplay(void){
               else if(randnum == 1) dataj = (Data * 15 / 4095) * 8;
               else if(randnum == 2) dataj = (Data * 16 / 4095) * 8;
             }
+
 
             block.moveblock(olddata, dataj, y, randnum);
             ST7735_DrawFastHLine(0, 16, 127, 11);
