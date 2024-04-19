@@ -330,11 +330,10 @@ void gameplay(void){
               else if(randnum == 2) dataj = (Data * 16 / 4095) * 8;
             }
 
-
             block.moveblock(olddata, dataj, y, randnum);
             ST7735_DrawFastHLine(0, 16, 127, 11);
 
-            olddata = dataj;
+            olddata = block.x * 8; //dataj;
             //if button pressed, drop
             last = now;
             now = Switch_In();
