@@ -176,30 +176,30 @@ public:
         settled = true;
     }
     void moveblock(int olddata, int dataj, int y, int randnum){
+        if(((dataj/8)<this->x) && collision()==1){
+                        dataj = olddata;
+                    }
+                    else if(((dataj/8)>this->x) && collision()==2){
+                        dataj = olddata;
+                    }
+                    else if(((dataj/8) != this->x) && collision()==3){
+                        dataj = olddata;
+                    }
+                    else if((dataj/8)<this->x){
+                        this->x = olddata / 8;              //c
+                        while(collision()!=1 && (this->x != dataj/8) && collision()!=3){
+                            this->x--;                      //c
+                        }
+                        dataj = this->x * 8;                //c
+                    }
+                    else if((dataj/8)>this->x){
+                        this->x = olddata / 8;              //c
+                        while(collision()!=2 && (this->x != dataj/8) && collision()!=3){
+                            this->x++;                      //c
+                        }
+                        dataj = this->x * 8;                //c
+                    }
         if(randnum == 0){                                       //cucumber
-            if(((dataj/8)<this->x) && collision()==1){
-                dataj = olddata;
-            }
-            else if(((dataj/8)>this->x) && collision()==2){
-                dataj = olddata;
-            }
-            else if(((dataj/8) != this->x) && collision()==3){
-                dataj = olddata;
-            }
-            else if((dataj/8)<this->x){
-                this->x = olddata / 8;              //c
-                while(collision()!=1 && (this->x != dataj/8) && collision()!=3){
-                    this->x--;                      //c
-                }
-                dataj = this->x * 8;                //c
-            }
-            else if((dataj/8)>this->x){
-                this->x = olddata / 8;              //c
-                while(collision()!=2 && (this->x != dataj/8) && collision()!=3){
-                    this->x++;                      //c
-                }
-                dataj = this->x * 8;                //c
-            }
             ST7735_FillRect(olddata, y-16, 8, 17, 0);
             ST7735_DrawBitmap(dataj, y, cucumber, 8, 8);
             ST7735_DrawBitmap(dataj, y-8, cucumber, 8, 8);
@@ -308,7 +308,7 @@ void gameplay(void){
         TimerG12_IntArm(80000000/30,1);
         pressed = 0;
         int y = 16;
-        randnum = Random(1);
+        randnum = Random(3);
         //if 0, cucumber
         //if 1, strawberry
         //if 2, blueberry
