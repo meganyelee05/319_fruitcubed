@@ -358,6 +358,14 @@ void gameover(void){
         bitmap[i] = 0;
     }
     while(1){
+            ST7735_DrawBitmap(0, 20, blender, 16, 16);
+            ST7735_DrawBitmap(40, 20, blender, 16, 16);
+            ST7735_DrawBitmap(80, 20, blender, 16, 16);
+            ST7735_DrawBitmap(112, 20, blender, 16, 16);
+            ST7735_DrawBitmap(0, 144, blender, 16, 16);
+            ST7735_DrawBitmap(40, 144, blender, 16, 16);
+            ST7735_DrawBitmap(80, 144, blender, 16, 16);
+            ST7735_DrawBitmap(112, 144, blender, 16, 16);
             last = now;
             Clock_Delay(800000);
             now = Switch_In();
