@@ -85,8 +85,8 @@ const char Line3_English[]="to rotate and SW1";
 const char Line3_Spanish[]="para rotar y SW1";
 const char Line4_English[]="to drop blocks";
 const char Line4_Spanish[]="para soltar";
-const char GG_English[]="Game Over";
-const char GG_Spanish[]="Fin";
+const char GG_English[]="You got juiced!";
+const char GG_Spanish[]="Eres jugo!";
 const char HS_English[]="High Score: ";
 const char HS_Spanish[]="Puntuaci\xA2n alta: ";
 
@@ -125,6 +125,9 @@ static uint32_t score = 0;
 static uint32_t highscore = 0;
 uint32_t pressed;
 int exittomain = 0;
+int jellyyval = 161;
+int jellytime = 0;
+int speed = 1;
 
 struct IBlock{
 public:
@@ -166,9 +169,51 @@ public:
         else if(randnum == 3){                                  //banana
             ST7735_DrawBitmap(x, y, banana, 8, 8);
             ST7735_DrawBitmap(x+8, y, banana, 8, 8);
-            ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
-            ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
+            //ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
+            //ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
+            this->x = x / 8;
+            this->y = y;
+            this->w = 2;
+            this->h = 8;
         }
+        else if(randnum == 4){
+                    ST7735_DrawBitmap(x, y, grape, 8, 8);             //grape
+
+                    this->x = x / 8;
+                    this->y = y;
+                    this->w = 1;
+                    this->h = 8;
+                }
+        else if(randnum == 5){                                       //lemon
+                    ST7735_DrawBitmap(x, y, lemon, 8, 8);
+                    ST7735_DrawBitmap(x, y-8, lemon, 8, 8);
+
+                    this->x = x / 8;
+                    this->y = y;
+                    this->w = 1;
+                    this->h = 16;
+                }
+        else if(randnum == 6){                                  //coconut
+                    ST7735_DrawBitmap(x, y, coconut, 8, 8);
+                    ST7735_DrawBitmap(x+8, y, coconut, 8, 8);
+                    //ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
+                    //ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
+                    this->x = x / 8;
+                    this->y = y;
+                    this->w = 2;
+                    this->h = 8;
+                }
+        else if(randnum == 7){                                  //orange
+                    ST7735_DrawBitmap(x, y, orange, 8, 8); //bot left corner
+                    ST7735_DrawBitmap(x, y-8, orange, 8, 8); //top left
+                    ST7735_DrawBitmap(x+8, y-8, orange, 8, 8); //top right
+                    ST7735_DrawBitmap(x+8, y, orange, 8, 8); //bot right
+
+                    this->x = x / 8;
+                    this->y = y;
+                    this->w = 2;
+                    this->h = 16;
+                }
         settled = false;
     }
     void blocksettled(){
@@ -223,17 +268,47 @@ public:
             this->x = dataj / 8;
             this->y = y;
         }
-        else if(randnum == 3){
-            ST7735_FillRect(olddata, y-8, 8, 9, 0);
-            ST7735_FillRect(olddata+8, y-24, 8, 25, 0);
+        else if(randnum == 3){                  //banana
+            ST7735_FillRect(olddata, y-8, 16, 9, 0);
+            //ST7735_FillRect(olddata+8, y-24, 8, 25, 0);
             ST7735_DrawBitmap(dataj, y, banana, 8, 8); //bot left
             ST7735_DrawBitmap(dataj+8, y, banana, 8, 8);
-            ST7735_DrawBitmap(dataj+8, y-8, banana, 8, 8);
-            ST7735_DrawBitmap(dataj+8, y-16, banana, 8, 8);
-
+            //ST7735_DrawBitmap(dataj+8, y-8, banana, 8, 8);
+            //ST7735_DrawBitmap(dataj+8, y-16, banana, 8, 8);
             this->x = dataj / 8;
             this->y = y;
         }
+        else if(randnum == 4){                  //grape
+                    ST7735_FillRect(olddata, y-8, 8, 9, 0);
+                    ST7735_DrawBitmap(dataj, y, grape, 8, 8);
+
+                    this->x = dataj / 8;
+                    this->y = y;
+        }
+        else if(randnum == 5){                                       //lemon
+                    ST7735_FillRect(olddata, y-16, 8, 17, 0);
+                    ST7735_DrawBitmap(dataj, y, lemon, 8, 8);
+                    ST7735_DrawBitmap(dataj, y-8, lemon, 8, 8);
+                    this->x = dataj / 8;
+                    this->y = y;
+         }
+        else if(randnum == 6){                  //coconut
+                    ST7735_FillRect(olddata, y-8, 16, 9, 0);
+                    ST7735_DrawBitmap(dataj, y, coconut, 8, 8); //bot left
+                    ST7735_DrawBitmap(dataj+8, y, coconut, 8, 8);
+                    this->x = dataj / 8;
+                    this->y = y;
+         }
+        else if(randnum == 7){
+                    ST7735_FillRect(olddata, y-16, 16, 17, 0);
+                    ST7735_DrawBitmap(dataj, y, orange, 8, 8); //bot left corner
+                    ST7735_DrawBitmap(dataj, y-8, orange, 8, 8); //top left
+                    ST7735_DrawBitmap(dataj+8, y-8, orange, 8, 8); //top right
+                    ST7735_DrawBitmap(dataj+8, y, orange, 8, 8); //bot right
+
+                    this->x = dataj / 8;
+                    this->y = y;
+         }
     }
 
     int collision(){
@@ -271,6 +346,8 @@ void setmap(IBlock block){
 
 void gameover(void){
     exittomain = 0;
+    jellyyval = 161;
+    jellytime = 0;
     Sound_Shoot(); //game over sound
     ST7735_FillScreen(ST7735_BLACK);
     ST7735_SetCursor(0, 7);
@@ -284,6 +361,12 @@ void gameover(void){
     ST7735_SetCursor(0, 9);
     ST7735_OutString((char *)Phrases[HS][myLanguage]);
     printf("%d", highscore);
+    if(highscore == score){
+    ST7735_SetCursor(0, 11);
+    printf("Smooooth-ie~");}
+    else{
+    ST7735_SetCursor(0, 11);
+    printf("Fruit salad,\n yummy yummy!");}
     for(int i = 0; i < 160; i++){
         bitmap[i] = 0;
     }
@@ -302,32 +385,39 @@ void gameplay(void){
     ST7735_FillScreen(ST7735_BLACK);
     ST7735_DrawFastHLine(0, 16, 127, 11);
     //nested while loop- outer loop generates sprites randomly, inner loop moves sprite
+
     while(1){
         if(exittomain) break;
         //initialize
-        TimerG12_IntArm(80000000/30,1);
+        TimerG12_IntArm(80000000/(30*speed),1);
         pressed = 0;
         int y = 16;
-        randnum = Random(3);
+        randnum = Random(8);
         //if 0, cucumber
         //if 1, strawberry
         //if 2, blueberry
+        //if 3, banana
+        //if 4, grape
+        //if 5, lemon
+        //if 6, coconut
+        //if 7, orange
           Sensor.Sync();
-          if(randnum == 0) dataj = (Data * 16 / 4095) * 8;
-          else if(randnum == 1) dataj = (Data * 15 / 4095) * 8;
-          else if(randnum == 2) dataj = (Data * 16 / 4095) * 8;
-          else if(randnum == 3) dataj = (Data * 15 / 4095) * 8;
-
-
+          if(randnum == 0 || randnum == 5) dataj = (Data * 16 / 4095) * 8;
+          else if(randnum == 1 || randnum ==7) dataj = (Data * 15 / 4095) * 8;
+          else if(randnum == 2 || randnum == 4) dataj = (Data * 16 / 4095) * 8;
+          else if(randnum == 3 || randnum == 6) dataj = (Data * 15 / 4095) * 8;
+         ST7735_SetCursor(0, 0);
+         ST7735_OutString((char *)"           ");
         IBlock block(dataj, y, randnum);
         olddata = dataj;
         while(1){
-
             if(pressed == 0){
               Sensor.Sync();
-              if(randnum == 0) dataj = (Data * 16 / 4095) * 8;
-              else if(randnum == 1) dataj = (Data * 15 / 4095) * 8;
-              else if(randnum == 2) dataj = (Data * 16 / 4095) * 8;
+              if(randnum == 0 || randnum == 5) dataj = (Data * 16 / 4095) * 8;
+              else if(randnum == 1 || randnum == 7) dataj = (Data * 15 / 4095) * 8;
+              else if(randnum == 2 || randnum == 4) dataj = (Data * 16 / 4095) * 8;
+              else if(randnum == 3 || randnum == 6) dataj = (Data * 15 / 4095) * 8;
+              else if(randnum == 4) dataj = (Data * 16 / 4095) * 8;
             }
 
             block.moveblock(olddata, dataj, y, randnum);
@@ -339,16 +429,48 @@ void gameplay(void){
             now = Switch_In();
             if(now != last){
                 if(now == 1){
-                    TimerG12_IntArm(80000000/3000,1);
+                    TimerG12_IntArm(80000000/(3000*speed),1);
                     pressed = 1;
                 }
             }
             //check if space below is clear
             if(block.y > 159 || checker(block)){                //block hits bottom or contact with another block
               block.blocksettled();
-              score += (block.w * block.h / 4);
+              score += (block.w * block.h / 8);
               //update bitmap
               setmap(block);
+              for(int i=0; i<160; i++){
+                  if(bitmap[i]==-1){
+                      if(i<jellyyval){
+                          jellytime = 1;
+                          jellyyval = i;
+                          break;}
+                      else{
+                          continue;
+                      }
+                   }
+               }
+               if(jellytime == 1){
+                   ST7735_FillRect(0, jellyyval, 128, (161-jellyyval), 20);
+                   for(int i=jellyyval; i<160; i++){
+                       bitmap[i]=-1;
+                   }
+                   if(jellyyval%3 == 0){
+                       ST7735_SetCursor(0, 0);
+                       ST7735_OutString((char *)"Fruity!");
+                   }
+                   else if(jellyyval%3 == 1){
+                       ST7735_SetCursor(0, 0);
+                       ST7735_OutString((char *)"Zesty!");
+                   }
+                   else{
+                       ST7735_SetCursor(0, 0);
+                       ST7735_OutString((char *)"Juicy!");
+                   }
+                   jellytime = 0;
+                   score+=16;
+                   speed++;
+              }
               Clock_Delay(80000000);
               if((block.y - block.h) <= 16) //if block is settled + over the limit
                   exittomain = 1;
@@ -398,7 +520,7 @@ int main(void){ // final main
   Sound_Init();  // initialize sound
   TExaS_Init(0,0,&TExaS_LaunchPadLogicPB27PB26); // PB27 and PB26
     // initialize interrupts on TimerG12 at 30 Hz
-  TimerG12_IntArm(80000000/30,1);
+  TimerG12_IntArm(80000000/(30*speed),1);
   // initialize all data structures
   __enable_irq();
 
