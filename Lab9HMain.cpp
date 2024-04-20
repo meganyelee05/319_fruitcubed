@@ -68,7 +68,7 @@ uint8_t TExaS_LaunchPadLogicPB27PB26(void){
 
 typedef enum {English, Spanish} Language_t;
 Language_t myLanguage=English;
-typedef enum {PLAY, INSTRUCT, LANGUAGE, SCORE, LINE1, LINE2, LINE3, LINE4, GG, HS} phrase_t;
+typedef enum {PLAY, INSTRUCT, LANGUAGE, SCORE, LINE1, LINE2, LINE3, LINE4, LINE5, GG, HS} phrase_t;
 const char Play_English[] ="Play";
 const char Play_Spanish[] ="Juega";
 const char Score_Spanish[]="Puntuaci\xA2n: ";
@@ -78,19 +78,21 @@ const char Language_Spanish[]="Espa\xA4ol";
 const char Instruct_English[]="How to Play";
 const char Instruct_Spanish[]="C\xA2mo Jugar";
 const char Line1_English[]="Move blocks with";
-const char Line1_Spanish[]="Mover bloques con";
-const char Line2_English[]="slidepot, use SW3";
-const char Line2_Spanish[]="slidepot, usar SW3";
-const char Line3_English[]="to rotate and SW1";
-const char Line3_Spanish[]="para rotar y SW1";
-const char Line4_English[]="to drop blocks";
-const char Line4_Spanish[]="para soltar";
+const char Line1_Spanish[]="\xADMover bloques con";
+const char Line2_English[]="slidepot, use SW1";
+const char Line2_Spanish[]="slidepot, usar SW1";
+const char Line3_English[]="to drop blocks and";
+const char Line3_Spanish[]="para soltar, y";
+const char Line4_English[]="clear rows for";
+const char Line4_Spanish[]="despeje las filas";
+const char Line5_English[]="extra juice!";
+const char Line5_Spanish[]="para m\xA0s jugo!";
 const char GG_English[]="You got juiced!";
 const char GG_Spanish[]="Eres jugo!";
 const char HS_English[]="High Score: ";
 const char HS_Spanish[]="Puntuaci\xA2n alta: ";
 
-const char *Phrases[10][2]={
+const char *Phrases[11][2]={
   {Play_English,Play_Spanish},
   {Instruct_English,Instruct_Spanish},
   {Language_English,Language_Spanish},
@@ -99,6 +101,7 @@ const char *Phrases[10][2]={
   {Line2_English, Line2_Spanish},
   {Line3_English, Line3_Spanish},
   {Line4_English, Line4_Spanish},
+  {Line5_English, Line5_Spanish},
   {GG_English, GG_Spanish},
   {HS_English, HS_Spanish}
 };
@@ -116,9 +119,7 @@ int16_t bitmap[160] = {
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-// ALL ST7735 OUTPUT MUST OCCUR IN MAIN
-
-uint32_t now = 0, last = 0, limit = 0;
+uint32_t now = 0, last = 0;
 uint32_t olddata = 0;
 uint32_t dataj, randnum;
 static uint32_t score = 0;
@@ -141,7 +142,6 @@ public:
         if(randnum == 0){                                       //cucumber
             ST7735_DrawBitmap(x, y, cucumber, 8, 8);
             ST7735_DrawBitmap(x, y-8, cucumber, 8, 8);
-
             this->x = x / 8;
             this->y = y;
             this->w = 1;
@@ -152,7 +152,6 @@ public:
             ST7735_DrawBitmap(x, y-8, strawberry, 8, 8); //top left
             ST7735_DrawBitmap(x+8, y-8, strawberry, 8, 8); //top right
             ST7735_DrawBitmap(x+8, y, strawberry, 8, 8); //bot right
-
             this->x = x / 8;
             this->y = y;
             this->w = 2;
@@ -160,7 +159,6 @@ public:
         }
         else if(randnum == 2){
             ST7735_DrawBitmap(x, y, blueberry, 8, 8);             //blueberry
-
             this->x = x / 8;
             this->y = y;
             this->w = 1;
@@ -169,8 +167,6 @@ public:
         else if(randnum == 3){                                  //banana
             ST7735_DrawBitmap(x, y, banana, 8, 8);
             ST7735_DrawBitmap(x+8, y, banana, 8, 8);
-            //ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
-            //ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
             this->x = x / 8;
             this->y = y;
             this->w = 2;
@@ -178,7 +174,6 @@ public:
         }
         else if(randnum == 4){
                     ST7735_DrawBitmap(x, y, grape, 8, 8);             //grape
-
                     this->x = x / 8;
                     this->y = y;
                     this->w = 1;
@@ -187,7 +182,6 @@ public:
         else if(randnum == 5){                                       //lemon
                     ST7735_DrawBitmap(x, y, lemon, 8, 8);
                     ST7735_DrawBitmap(x, y-8, lemon, 8, 8);
-
                     this->x = x / 8;
                     this->y = y;
                     this->w = 1;
@@ -196,8 +190,6 @@ public:
         else if(randnum == 6){                                  //coconut
                     ST7735_DrawBitmap(x, y, coconut, 8, 8);
                     ST7735_DrawBitmap(x+8, y, coconut, 8, 8);
-                    //ST7735_DrawBitmap(x+8, y-8, banana, 8, 8);
-                    //ST7735_DrawBitmap(x+8, y-16, banana, 8, 8);
                     this->x = x / 8;
                     this->y = y;
                     this->w = 2;
@@ -217,7 +209,7 @@ public:
         settled = false;
     }
     void blocksettled(){
-        Sound_Killed();
+        Sound_Killed(); //settled sound
         settled = true;
     }
     void moveblock(int olddata, int dataj, int y, int randnum){
@@ -257,31 +249,25 @@ public:
             ST7735_DrawBitmap(dataj, y-8, strawberry, 8, 8); //top left
             ST7735_DrawBitmap(dataj+8, y-8, strawberry, 8, 8); //top right
             ST7735_DrawBitmap(dataj+8, y, strawberry, 8, 8); //bot right
-
             this->x = dataj / 8;
             this->y = y;
         }
         else if(randnum == 2){                  //blueberry
             ST7735_FillRect(olddata, y-8, 8, 9, 0);
             ST7735_DrawBitmap(dataj, y, blueberry, 8, 8);
-
             this->x = dataj / 8;
             this->y = y;
         }
         else if(randnum == 3){                  //banana
             ST7735_FillRect(olddata, y-8, 16, 9, 0);
-            //ST7735_FillRect(olddata+8, y-24, 8, 25, 0);
             ST7735_DrawBitmap(dataj, y, banana, 8, 8); //bot left
             ST7735_DrawBitmap(dataj+8, y, banana, 8, 8);
-            //ST7735_DrawBitmap(dataj+8, y-8, banana, 8, 8);
-            //ST7735_DrawBitmap(dataj+8, y-16, banana, 8, 8);
             this->x = dataj / 8;
             this->y = y;
         }
         else if(randnum == 4){                  //grape
                     ST7735_FillRect(olddata, y-8, 8, 9, 0);
                     ST7735_DrawBitmap(dataj, y, grape, 8, 8);
-
                     this->x = dataj / 8;
                     this->y = y;
         }
@@ -348,6 +334,7 @@ void gameover(void){
     exittomain = 0;
     jellyyval = 161;
     jellytime = 0;
+    speed = 0;
     Sound_Shoot(); //game over sound
     ST7735_FillScreen(ST7735_BLACK);
     ST7735_SetCursor(0, 7);
@@ -362,11 +349,11 @@ void gameover(void){
     ST7735_OutString((char *)Phrases[HS][myLanguage]);
     printf("%d", highscore);
     if(highscore == score){
-    ST7735_SetCursor(0, 11);
-    printf("Smooooth-ie~");}
+        ST7735_SetCursor(0, 11);
+        printf("Smooooth-ie~");}
     else{
-    ST7735_SetCursor(0, 11);
-    printf("Fruit salad,\n yummy yummy!");}
+        ST7735_SetCursor(0, 11);
+        printf("Fruit salad,\n yummy yummy!");}
     for(int i = 0; i < 160; i++){
         bitmap[i] = 0;
     }
@@ -385,7 +372,6 @@ void gameplay(void){
     ST7735_FillScreen(ST7735_BLACK);
     ST7735_DrawFastHLine(0, 16, 127, 11);
     //nested while loop- outer loop generates sprites randomly, inner loop moves sprite
-
     while(1){
         if(exittomain) break;
         //initialize
@@ -494,6 +480,8 @@ void HowTo(void){
     ST7735_SetCursor(0, 3);
     ST7735_OutString((char *)Phrases[LINE4][myLanguage]);
     ST7735_SetCursor(0, 4);
+    ST7735_OutString((char *)Phrases[LINE5][myLanguage]);
+    ST7735_SetCursor(0,5);
     ST7735_OutString((char *)"GLHF :P");
     while(1){
         last = now;
