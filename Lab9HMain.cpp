@@ -403,7 +403,6 @@ void gameplay(void){
               else if(randnum == 1 || randnum == 7) dataj = (Data * 15 / 4095) * 8;
               else if(randnum == 2 || randnum == 4) dataj = (Data * 16 / 4095) * 8;
               else if(randnum == 3 || randnum == 6) dataj = (Data * 15 / 4095) * 8;
-              else if(randnum == 4) dataj = (Data * 16 / 4095) * 8;
             }
 
             block.moveblock(olddata, dataj, y, randnum);
