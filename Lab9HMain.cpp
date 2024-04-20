@@ -334,25 +334,25 @@ void gameover(void){
     exittomain = 0;
     jellyyval = 161;
     jellytime = 0;
-    speed = 0;
+    speed = 1;
     Sound_Shoot(); //game over sound
     ST7735_FillScreen(ST7735_BLACK);
-    ST7735_SetCursor(0, 7);
+    ST7735_SetCursor(0, 5);
     ST7735_OutString((char *)Phrases[GG][myLanguage]);
-    ST7735_SetCursor(0, 8);
+    ST7735_SetCursor(0, 7);
     ST7735_OutString((char *)Phrases[SCORE][myLanguage]);
     printf("%d", score);
     if(score>highscore){
         highscore = score;
     }
-    ST7735_SetCursor(0, 9);
+    ST7735_SetCursor(0, 8);
     ST7735_OutString((char *)Phrases[HS][myLanguage]);
     printf("%d", highscore);
     if(highscore == score){
-        ST7735_SetCursor(0, 11);
+        ST7735_SetCursor(0, 10);
         printf("Smooooth-ie~");}
     else{
-        ST7735_SetCursor(0, 11);
+        ST7735_SetCursor(0, 10);
         printf("Fruit salad,\n yummy yummy!");}
     for(int i = 0; i < 160; i++){
         bitmap[i] = 0;
