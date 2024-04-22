@@ -2,7 +2,7 @@
 // Runs on MSPM0G3507
 // Lab 9 ECE319H
 // Megan Lee, Sanjana Kishore
-// Last Modified: 1/1/2024
+// Last Modified: 4/22/2024
 
 #include <stdio.h>
 #include <stdint.h>
@@ -22,10 +22,7 @@
 extern "C" void __disable_irq(void);
 extern "C" void __enable_irq(void);
 extern "C" void TIMG12_IRQHandler(void);
-// ****note to ECE319K students****
-// the data sheet says the ADC does not work when clock is 80 MHz
-// however, the ADC seems to work on my boards at 80 MHz
-// I suggest you try 80MHz, but if it doesn't work, switch to 40MHz
+
 void PLL_Init(void){ // set phase lock loop (PLL)
   // Clock_Init40MHz(); // run this line for 40MHz
   Clock_Init80MHz(0);   // run this line for 80MHz
@@ -44,18 +41,11 @@ SlidePot Sensor(1500,0); // copy calibration from Lab 7
 
 uint32_t Data; //12-bit ADC
 
-// games  engine runs at 30Hz
 void TIMG12_IRQHandler(void){uint32_t pos,msg;
   if((TIMG12->CPU_INT.IIDX) == 1){ // this will acknowledge
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
     GPIOB->DOUTTGL31_0 = GREEN; // toggle PB27 (minimally intrusive debugging)
-// game engine goes here
-    // 1) sample slide pot
-    // 2) read input switches
-    // 3) move sprites
-    // 4) start sounds
-    // 5) set semaphore
-    // NO LCD OUTPUT IN INTERRUPT SERVICE ROUTINES
+
         Data = Sensor.In();
         Sensor.Save(Data);
 
@@ -106,7 +96,7 @@ const char *Phrases[11][2]={
   {HS_English, HS_Spanish}
 };
 
-int16_t bitmap[160] = {
+int16_t bitmap[160] = {                             //keeps track of current "settled" blocks
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -119,21 +109,15 @@ int16_t bitmap[160] = {
                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-uint32_t now = 0, last = 0;
-uint32_t olddata = 0;
-uint32_t dataj, randnum;
+uint32_t now = 0, last = 0, olddata = 0;
+uint32_t dataj, randnum, pressed;
 static uint32_t score = 0;
 static uint32_t highscore = 0;
-uint32_t pressed;
-int exittomain = 0;
-int jellyyval = 161;
-int jellytime = 0;
-int speed = 1;
+int exittomain = 0, jellyyval = 161, jellytime = 0, speed = 1;
 
 struct IBlock{
 public:
-    int32_t x;
-    int32_t y;
+    int32_t x, y;
     const uint16_t *image;
     int16_t h, w;
     bool settled;
@@ -200,7 +184,6 @@ public:
                     ST7735_DrawBitmap(x, y-8, orange, 8, 8); //top left
                     ST7735_DrawBitmap(x+8, y-8, orange, 8, 8); //top right
                     ST7735_DrawBitmap(x+8, y, orange, 8, 8); //bot right
-
                     this->x = x / 8;
                     this->y = y;
                     this->w = 2;
@@ -213,29 +196,29 @@ public:
         settled = true;
     }
     void moveblock(int olddata, int dataj, int y, int randnum){
-        if(((dataj/8)<this->x) && collision()==1){
-                        dataj = olddata;
-                    }
-                    else if(((dataj/8)>this->x) && collision()==2){
-                        dataj = olddata;
-                    }
-                    else if(((dataj/8) != this->x) && collision()==3){
-                        dataj = olddata;
-                    }
-                    else if((dataj/8)<this->x){
-                        this->x = olddata / 8;              //c
-                        while(collision()!=1 && (this->x != dataj/8) && collision()!=3){
-                            this->x--;                      //c
-                        }
-                        dataj = this->x * 8;                //c
-                    }
-                    else if((dataj/8)>this->x){
-                        this->x = olddata / 8;              //c
-                        while(collision()!=2 && (this->x != dataj/8) && collision()!=3){
-                            this->x++;                      //c
-                        }
-                        dataj = this->x * 8;                //c
-                    }
+        if(((dataj/8)<this->x) && collision()==1){          //if moving left, collision left
+            dataj = olddata;
+        }
+        else if(((dataj/8)>this->x) && collision()==2){     //if moving right, collision right
+            dataj = olddata;
+        }
+        else if(((dataj/8) != this->x) && collision()==3){  //if moving, collision both
+            dataj = olddata;
+        }
+        else if((dataj/8)<this->x){                         //if moving left, tp till collide/dataj
+            this->x = olddata / 8;
+            while(collision()!=1 && (this->x != dataj/8) && collision()!=3){
+                this->x--;
+            }
+            dataj = this->x * 8;
+        }
+        else if((dataj/8)>this->x){                         //if moving right, tp till collide/dataj
+            this->x = olddata / 8;
+            while(collision()!=2 && (this->x != dataj/8) && collision()!=3){
+                this->x++;
+            }
+            dataj = this->x * 8;
+        }                                                       //redraw
         if(randnum == 0){                                       //cucumber
             ST7735_FillRect(olddata, y-16, 8, 17, 0);
             ST7735_DrawBitmap(dataj, y, cucumber, 8, 8);
@@ -286,12 +269,11 @@ public:
                     this->y = y;
          }
         else if(randnum == 7){
-                    ST7735_FillRect(olddata, y-16, 16, 17, 0);
+                    ST7735_FillRect(olddata, y-16, 16, 17, 0);  //orange
                     ST7735_DrawBitmap(dataj, y, orange, 8, 8); //bot left corner
                     ST7735_DrawBitmap(dataj, y-8, orange, 8, 8); //top left
                     ST7735_DrawBitmap(dataj+8, y-8, orange, 8, 8); //top right
                     ST7735_DrawBitmap(dataj+8, y, orange, 8, 8); //bot right
-
                     this->x = dataj / 8;
                     this->y = y;
          }
@@ -348,24 +330,24 @@ void gameover(void){
     ST7735_SetCursor(0, 8);
     ST7735_OutString((char *)Phrases[HS][myLanguage]);
     printf("%d", highscore);
-    if(highscore == score){
+    if(highscore == score){                     //for new high score !!
         ST7735_SetCursor(0, 10);
         printf("Smooooth-ie~");}
     else{
         ST7735_SetCursor(0, 10);
-        printf("Fruit salad,\n yummy yummy!");}
+        printf("Fruit salad,\n yummy yummy!");} //L skill issue
     for(int i = 0; i < 160; i++){
         bitmap[i] = 0;
     }
     while(1){
-            ST7735_DrawBitmap(0, 20, blender, 16, 16);
-            ST7735_DrawBitmap(40, 20, blender, 16, 16);
-            ST7735_DrawBitmap(80, 20, blender, 16, 16);
-            ST7735_DrawBitmap(112, 20, blender, 16, 16);
-            ST7735_DrawBitmap(0, 144, blender, 16, 16);
-            ST7735_DrawBitmap(40, 144, blender, 16, 16);
-            ST7735_DrawBitmap(80, 144, blender, 16, 16);
-            ST7735_DrawBitmap(112, 144, blender, 16, 16);
+        ST7735_DrawBitmap(0, 20, blender, 16, 16);
+        ST7735_DrawBitmap(37, 20, blender, 16, 16);
+        ST7735_DrawBitmap(74, 20, blender, 16, 16);
+        ST7735_DrawBitmap(112, 20, blender, 16, 16);
+        ST7735_DrawBitmap(0, 144, blender, 16, 16);
+        ST7735_DrawBitmap(37, 144, blender, 16, 16);
+        ST7735_DrawBitmap(74, 144, blender, 16, 16);
+        ST7735_DrawBitmap(112, 144, blender, 16, 16);
             last = now;
             Clock_Delay(800000);
             now = Switch_In();
@@ -396,7 +378,7 @@ void gameplay(void){
         //if 6, coconut
         //if 7, orange
           Sensor.Sync();
-          if(randnum == 0 || randnum == 5) dataj = (Data * 16 / 4095) * 8;
+          if(randnum == 0 || randnum == 5) dataj = (Data * 16 / 4095) * 8;  //process input
           else if(randnum == 1 || randnum ==7) dataj = (Data * 15 / 4095) * 8;
           else if(randnum == 2 || randnum == 4) dataj = (Data * 16 / 4095) * 8;
           else if(randnum == 3 || randnum == 6) dataj = (Data * 15 / 4095) * 8;
@@ -411,6 +393,7 @@ void gameplay(void){
               else if(randnum == 1 || randnum == 7) dataj = (Data * 15 / 4095) * 8;
               else if(randnum == 2 || randnum == 4) dataj = (Data * 16 / 4095) * 8;
               else if(randnum == 3 || randnum == 6) dataj = (Data * 15 / 4095) * 8;
+              else if(randnum == 4) dataj = (Data * 16 / 4095) * 8;
             }
 
             block.moveblock(olddata, dataj, y, randnum);
@@ -437,7 +420,8 @@ void gameplay(void){
                       if(i<jellyyval){
                           jellytime = 1;
                           jellyyval = i;
-                          break;}
+                          break;
+                      }
                       else{
                           continue;
                       }
@@ -465,7 +449,7 @@ void gameplay(void){
                    speed++;
               }
               Clock_Delay(80000000);
-              if((block.y - block.h) <= 16) //if block is settled + over the limit
+              if((block.y - block.h) <= 16) //if block is settled + over the limit, game over
                   exittomain = 1;
               break;
             }
@@ -518,7 +502,6 @@ int main(void){ // final main
   TimerG12_IntArm(80000000/(30*speed),1);
   // initialize all data structures
   __enable_irq();
-
   while(1){
     //main title screen
        ST7735_FillScreen(ST7735_BLACK);
